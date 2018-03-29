@@ -35,6 +35,16 @@
 # ----- Helper functions
 # ----------------------
 
+getApps() {
+    apps=() # Create array
+    if [[ -f $1 && -s $1 ]]; then
+      while IFS= read -r line # Read a line
+      do
+          apps+=("$line") # Append line to the array
+      done < "$1"
+    fi
+}
+
 # Output a selectable list of organizations
 __cf_orgs() {
     declare -a cont_cmd
@@ -53,10 +63,15 @@ __cf_spaces() {
 
 # Output a selectable list of applications
 __cf_apps() {
-    declare -a cont_cmd
-    cont_cmd=($(CF_COLOR=false CF_TRACE=false cf apps | awk 'NR>4{print $1}'))
-    if [[ 'X$cont_cmd' != 'X' ]]
-        _describe 'APP' cont_cmd
+    getApps ~/.cf_apps
+    if [[ -n $apps ]]; then
+        _describe 'APP' apps
+    else    
+        apps=($(CF_COLOR=false CF_TRACE=false cf apps | awk 'NR>4{print $1}'))
+        if [[ 'X$apps' != 'X' ]];
+            printf "%s\n" "${apps[@]}" > ~/.cf_apps
+            _describe 'APP' apps
+    fi
 }
 
 # Output a selectable list of stacks
@@ -801,6 +816,7 @@ _1st_arguments=(
 # ----- end 1st Arguments
 # -----------------------
 
+
 # ----------
 # ----- Main
 # ----------
@@ -808,6 +824,7 @@ _1st_arguments=(
 _arguments '*:: :->command'
 
 if (( CURRENT == 1 )); then
+  echo bbb $CURRENT
   _describe -t commands "cf command" _1st_arguments
   return
 fi
